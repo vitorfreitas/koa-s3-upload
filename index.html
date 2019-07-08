@@ -1,0 +1,21 @@
+<input type="file" />
+
+<script>
+  const fileInput = document.querySelector("input[type='file']");
+
+  fileInput.addEventListener('change', async e => {
+    console.log('initializing...');
+
+    const file = e.target.files[0];
+    const data = new FormData();
+    data.append('file', file);
+
+    const res = await fetch('http://localhost:3000/upload', {
+      method: 'POST',
+      body: data
+    });
+
+    const { url } = await res.json();
+    console.log(url);
+  });
+</script>
