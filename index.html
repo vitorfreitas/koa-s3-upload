@@ -1,3 +1,4 @@
+<!-- UPLOAD EXAMPLE -->
 <input type="file" />
 
 <script>
@@ -10,12 +11,16 @@
     const data = new FormData();
     data.append('file', file);
 
-    const res = await fetch('http://localhost:3000/upload', {
-      method: 'POST',
-      body: data
-    });
+    try {
+      const res = await fetch('http://localhost:3000/upload', {
+        method: 'POST',
+        body: data
+      });
 
-    const { url } = await res.json();
-    console.log(url);
+      const { url } = await res.json();
+      console.log(url);
+    } catch (err) {
+      console.warn(err);
+    }
   });
 </script>

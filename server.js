@@ -3,7 +3,7 @@ const koaBody = require('koa-body');
 const koaRouter = require('koa-router');
 const cors = require('@koa/cors');
 const aws = require('aws-sdk');
-const multiparty = require('multiparty');
+const busboy = require('async-busboy');
 const fs = require('fs');
 const fileType = require('file-type');
 
@@ -15,7 +15,7 @@ aws.config.update({
 const router = new koaRouter();
 const s3 = new aws.S3();
 
-const uploadFile = (buffer, name, type) => {
+const uploadFile = async (buffer, name, type) => {
   const params = {
     ACL: 'public-read',
     Body: buffer,
@@ -23,25 +23,22 @@ const uploadFile = (buffer, name, type) => {
     ContentType: type.mime,
     Key: `${name}.${type.ext}`
   };
-  return s3.upload(params).promise();
+  return await s3.upload(params).promise();
 };
 
 router.post('/upload', async ctx => {
-  const formData = new multiparty.Form();
-  formData.parse(ctx.req, async (err, fields, files) => {
-    if (err) throw new Error(err.message);
-    try {
-      const path = files.file[0].path;
-      const buffer = fs.readFileSync(path);
-      const type = fileType(buffer);
-      const timestamp = Date.now().toString();
-      const fileName = `${timestamp}`;
-      const { Location } = await uploadFile(buffer, fileName, type);
-      ctx.body = { url: Location };
-    } catch (err) {
-      ctx.body = err.message;
-    }
-  });
+  try {
+    const { fields, files } = await busboy(ctx.req);
+    const path = files[0].path;
+    const buffer = fs.readFileSync(path);
+    const type = fileType(buffer);
+    const timestamp = Date.now().toString();
+    const fileName = `${timestamp}`;
+    const { Location } = await uploadFile(buffer, fileName, type);
+    ctx.body = { url: Location };
+  } catch (err) {
+    ctx.body = err.message;
+  }
 });
 
 const app = new Koa();
@@ -49,6 +46,4 @@ const app = new Koa();
 app.use(koaBody());
 app.use(cors());
 app.use(router.routes());
-app.listen(3000, () => {
-  console.log('LISTENING ON PORT 3000');
-});
+app.listen(3000, () => console.log('LISTENING ON PORT 3000'));
