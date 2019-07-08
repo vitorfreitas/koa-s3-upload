@@ -1,3 +1,4 @@
+require('dotenv/config');
 const Koa = require('koa');
 const koaBody = require('koa-body');
 const koaRouter = require('koa-router');
@@ -8,8 +9,8 @@ const fs = require('fs');
 const fileType = require('file-type');
 
 aws.config.update({
-  accessKeyId: 'AKIAITVG6JQ6CCPVGXZA',
-  secretAccessKey: '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'
+  accessKeyId: process.env.AWS_ACCESSKEY,
+  secretAccessKey: process.env.AWS_SECRET
 });
 
 const router = new koaRouter();
@@ -19,7 +20,7 @@ const uploadFile = async (buffer, name, type) => {
   const params = {
     ACL: 'public-read',
     Body: buffer,
-    Bucket: 'koa-uploader',
+    Bucket: process.env.AWS_BUCKET,
     ContentType: type.mime,
     Key: `${name}.${type.ext}`
   };
@@ -43,7 +44,7 @@ router.post('/upload', async ctx => {
 
 const app = new Koa();
 
-app.use(koaBody());
 app.use(cors());
+app.use(koaBody());
 app.use(router.routes());
 app.listen(3000, () => console.log('LISTENING ON PORT 3000'));
